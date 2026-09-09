@@ -1,117 +1,86 @@
 # NebNotes
 
-Plataforma web para organizar seus estudos de programação em uma estrutura em árvore com editor de código, anotações renderizadas, tags e compartilhamento.
+Aplicativo pessoal **local-first** para organizar conhecimento.
 
-## 🎯 Objetivo
+> Um lugar para guardar, organizar e consultar tudo que você aprende.
 
-NebNotes é uma ferramenta de aprendizado que permite você:
-- 📚 Organizar estudos em árvore (Programação > Java > If Básico)
-- ✏️ Escrever e editar código com anotações
-- 🏷️ Adicionar tags customizáveis
-- 📝 Versionar seu código
-- 🔗 Compartilhar snippets públicos
-- 📊 Filtrar por tags
-
-## 🎨 Paleta de Cores
-
-- **Background:** #f5f1ed (Bege warm)
-- **Sidebar:** #efefef (Cinza prata)
-- **Cards:** #fafaf8 (Branco off)
-- **Accent:** #8b3a3a (Vermelho Escuro)
-- **Gradiente:** #8b3a3a → #5c2424
-
-## 🏗️ Estrutura do Projeto
+## Filosofia
 
 ```
-subnoted/
-├── index.html          # HTML principal
-├── css/
-│   └── style.css       # Estilos globais + paleta
-├── js/
-│   ├── app.js          # Lógica principal
-│   ├── supabase.js     # Integração Supabase (TODO)
-│   └── utils.js        # Funções auxiliares
-├── README.md           # Este arquivo
-└── .gitignore         # Git ignore
+CRIAR → ORGANIZAR → EDITAR → CONSULTAR
 ```
 
-## 🚀 Próximos Passos
+Simples, rápido e offline. Sem conta, sem servidor, sem colaboração.
 
-### Fase 1: Setup Supabase (Semana 1)
-- [ ] Criar projeto Supabase
-- [ ] Criar tabelas (users, folders, snippets, tags, versions)
-- [ ] Configurar autenticação
+## Funcionalidades
 
-### Fase 2: Frontend + Backend (Semana 2-3)
-- [ ] Conectar Supabase ao app
-- [ ] CRUD de snippets
-- [ ] CRUD de pastas
-- [ ] Navegação em árvore
+- **Árvore de pastas e subpastas** livre
+- **Notas** com Markdown, syntax highlighting e tipos/ícones
+- **Dashboard** com visão geral e notas recentes
+- **Breadcrumbs** e menu de contexto
+- **Persistência local**: SQLite no desktop · localStorage no navegador
+- **Importar / Exportar** backup JSON + export de nota em Markdown
+- **Tema claro/escuro** e configurações de fonte
+- **Sem execução de código** — código é apenas conteúdo
 
-### Fase 3: Features Avançadas (Semana 4)
-- [ ] Versionamento
-- [ ] Compartilhamento público
-- [ ] Filtro por tags
+## Stack
 
-### Fase 4: Deploy (Semana 5)
-- [ ] Deploy Vercel
-- [ ] Conectar domínio próprio
+- HTML / CSS / JavaScript puro
+- marked.js + highlight.js (CDN)
+- Font Awesome
+- **SQLite** (rusqlite) no desktop via Tauri
 
-## 🛠️ Stack
+## Como executar (navegador — testar agora)
 
-- **Frontend:** HTML/CSS/JavaScript Puro
-- **Banco de Dados:** Supabase (PostgreSQL)
-- **Hospedagem:** Vercel
-- **Versionamento:** GitHub
-
-## 📦 Como Usar
-
-1. Clone o repositório:
 ```bash
-git clone https://github.com/SEU_USUARIO/subnoted.git
-cd subnoted
+git clone https://github.com/MottaGustavo/Nebnotes.git
+cd Nebnotes
+
+# Opção 1: abrir direto
+# Windows: start index.html
+# macOS: open index.html
+# Linux: xdg-open index.html
+
+# Opção 2: servidor local
+npx serve . -p 1420
+# depois: http://localhost:1420
 ```
 
-2. Abra `index.html` no navegador
+## Desktop com SQLite (Tauri)
 
-3. (Em breve) Configure Supabase e conecte o banco
+### Pré-requisitos
+- Node.js 18+
+- Rust (https://rustup.rs)
+- Dependências do SO: https://v2.tauri.app/start/prerequisites/
 
-## 📝 Componentes Principais
+### Rodar
+```bash
+npm install
+npm run tauri:dev
+```
 
-### Sidebar
-- Árvore de pastas navegável
-- Expandível/colapsável
-- Highlight em vermelho para item ativo
+### Gerar instalável Windows
+```bash
+npm run tauri:build
+# Artefatos em: src-tauri/target/release/bundle/
+```
 
-### Editor
-- Textarea para código
-- Textarea para anotações
-- Seletor de versão
-- Botões salvar/deletar
+Arquivo SQLite:
+- Windows: `%APPDATA%\NebNotes\nebnotes.db`
+- Linux: `~/.local/share/NebNotes/nebnotes.db`
+- macOS: `~/Library/Application Support/NebNotes/nebnotes.db`
 
-### Painel Direito
-- Pré-visualização de anotações (markdown)
-- Tags customizáveis
-- Botão compartilhamento
-- Toggle Privado/Público
+## Estrutura
 
-## 🎓 Features
-
-- ✅ Árvore de pastas
-- ✅ Editor de código
-- ✅ Anotações em Markdown
-- ✅ Tags
-- ✅ Versionamento (estrutura pronta)
-- ✅ Compartilhamento público (estrutura pronta)
-- ⏳ Filtro por tags
-- ⏳ Export PDF
-- ⏳ Autenticação
-- ⏳ Sync Supabase
-
-## 📧 Contato
-
-Gustavo | Brusque, SC | 2025
-
----
-
-**Status:** Em desenvolvimento ⚙️
+```
+Nebnotes/
+├── index.html
+├── css/style.css
+├── js/
+│   ├── storage.js   # localStorage + SQLite
+│   ├── utils.js
+│   └── app.js
+├── src-tauri/       # Tauri + rusqlite
+├── package.json
+└── README.md
+```
