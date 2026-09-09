@@ -1,287 +1,147 @@
 /* ========================================
-   SUBNOTED - APP.JS
-   Lógica principal da aplicação
+   NebNotes - Application Core
    ======================================== */
 
-// Estado global
-let currentSnippet = {
-  id: 'if-basico',
-  title: 'If Básico',
-  code: `if (x > 5) {
-  System.out.println("Maior que 5");
-}
-else {
-  System.out.println("Menor ou igual");
-}`,
-  annotations: `Aprendi na aula 5.
-Diferença entre if e if/else.
-Usar **>=** para maior ou igual.`,
-  tags: ['Escola', 'Condicional'],
-  version: 2,
-  public: false,
-};
+const App = {
+  currentView: 'dashboard',
+  currentNoteId: null,
+  currentFolderId: null,
+  contextTarget: null,
+  previewOpen: false,
+  saveTimer: null,
 
-// ========================================
-// INICIALIZAÇÃO
-// ========================================
-
-document.addEventListener('DOMContentLoaded', () => {
-  initializeEventListeners();
-  loadSnippet();
-});
-
-// ========================================
-// EVENT LISTENERS
-// ========================================
-
-function initializeEventListeners() {
-  // Sidebar - navegação
-  const folderItems = document.querySelectorAll('.folder-item');
-  folderItems.forEach(item => {
-    item.addEventListener('click', handleFolderClick);
-  });
-
-  // Editor
-  document.getElementById('codeEditor').addEventListener('change', saveSnippet);
-  document.getElementById('annotationsEditor').addEventListener('change', updatePreview);
-  document.getElementById('saveButton').addEventListener('click', saveSnippet);
-  document.getElementById('deleteButton').addEventListener('click', deleteSnippet);
-
-  // Tags
-  document.getElementById('addTagButton').addEventListener('click', addTag);
-  document.getElementById('tagInput').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-      addTag();
-      e.preventDefault();
+  async init() {
+    await Storage.load();
+    this.applySettings();
+    this.bindEvents();
+    this.renderTree();
+    this.showDashboard();
+    console.log('[NebNotes] Backend:', Storage.getBackend());
+    if (Storage.getBackend() === 'sqlite') {
+      Storage.getDbPath().then(path => console.log('[NebNotes] SQLite:', path));
     }
-  });
+  },
 
-  // Compartilhamento
-  document.getElementById('publicToggle').addEventListener('change', togglePublic);
-  document.getElementById('shareButton').addEventListener('click', copyShareLink);
+  applySettings() {
+    const s = Storage.getSettings();
+    applyTheme(s.theme || 'light');
+    document.documentElement.style.setProperty('--editor-font-size', (s.fontSize || 14) + 'px');
+    const content = document.getElementById('noteContent');
+    if (content) content.style.fontSize = (s.fontSize || 14) + 'px';
+  },
 
-  // Outros
-  document.getElementById('versionSelect').addEventListener('change', loadVersion);
-  document.getElementById('filterTags').addEventListener('change', filterByTag);
-  document.getElementById('exportPDF').addEventListener('click', exportPDF);
-}
+  bindEvents() {
+    document.getElementById('btnNewFolder').addEventListener('click', () => this.promptNewFolder(null));
+    document.getElementById('btnNewNote').addEventListener('click', () => this.promptNewNote(this.currentFolderId));
+    document.getElementById('btnSettings').addEventListener('click', () => this.openSettings());
+    document.getElementById('btnDashboard').addEventListener('click', () => this.showDashboard());
+    document.getElementById('logoBtn').addEventListener('click', () => this.showDashboard());
+    document.getElementById('dashNewNote').addEventListener('click', () => this.promptNewNote(null));
+    document.getElementById('dashNewFolder').addEventListener('click', () => this.promptNewFolder(null));
+    document.getElementById('btnSaveNote').addEventListener('click', () => this.saveCurrentNote(true));
+    document.getElementById('noteTitle').addEventListener('input', debounce(() => this.saveCurrentNote(), 600));
+    document.getElementById('noteContent').addEventListener('input', debounce(() => {
+      this.saveCurrentNote();
+      if (this.previewOpen) this.updatePreview();
+    }, 500));
+    document.getElementById('noteTypeBtn').addEventListener('click', () => this.openTypePicker());
+    document.getElementById('btnTogglePreview').addEventListener('click', () => this.togglePreview());
+    document.querySelectorAll('.tb-btn[data-md]').forEach(btn => {
+      btn.addEventListener('click', () => this.insertMarkdown(btn.dataset.md));
+    });
+    document.getElementById('btnFolderNewNote').addEventListener('click', () => this.promptNewNote(this.currentFolderId));
+    document.getElementById('btnFolderNewSubfolder').addEventListener('click', () => this.promptNewFolder(this.currentFolderId));
+    document.getElementById('modalClose').addEventListener('click', () => this.closeModal());
+    document.getElementById('modalOverlay').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) this.closeModal();
+    });
+    document.getElementById('pickerOverlay').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) this.closePicker();
+    });
+    document.addEventListener('click', () => this.hideContextMenu());
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        if (this.currentView === 'note') this.saveCurrentNote(true);
+      }
+      if (e.key === 'Escape') {
+        this.hideContextMenu();
+        this.closeModal();
+        this.closePicker();
+      }
+    });
+  },
 
-// ========================================
-// SIDEBAR - NAVEGAÇÃO
-// ========================================
+  renderTree() {
+    const container = document.getElementById('treeContainer');
+    container.innerHTML = '';
+    const roots = Storage.getRootFolders().sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+    if (roots.length === 0) {
+      container.innerHTML = '<div class="empty-state" style="padding:16px;text-align:center;">Nenhuma pasta ainda.<br>Crie a primeira!</div>';
+      return;
+    }
+    roots.forEach(f => container.appendChild(this.buildTreeNode(f)));
+  },
 
-function handleFolderClick(e) {
-  // Remove active de todos
-  document.querySelectorAll('.folder-item').forEach(item => {
-    item.classList.remove('active');
-  });
-
-  // Adiciona active ao clicado
-  this.classList.add('active');
-
-  // Carrega snippet
-  const id = this.getAttribute('data-id');
-  loadSnippet(id);
-}
-
-// ========================================
-// CARREGAR SNIPPET
-// ========================================
-
-function loadSnippet(id = null) {
-  if (id) {
-    currentSnippet.id = id;
-    currentSnippet.title = document.querySelector(`[data-id="${id}"]`).textContent.trim();
-  }
-
-  // Atualizar título
-  document.getElementById('currentTitle').textContent = `${currentSnippet.title} · Java`;
-
-  // Carregar código
-  document.getElementById('codeEditor').value = currentSnippet.code;
-
-  // Carregar anotações
-  document.getElementById('annotationsEditor').value = currentSnippet.annotations;
-
-  // Atualizar preview
-  updatePreview();
-
-  // Atualizar tags
-  updateTagsList();
-
-  // Atualizar compartilhamento
-  document.getElementById('publicToggle').checked = currentSnippet.public;
-}
-
-// ========================================
-// ANOTAÇÕES - PREVIEW
-// ========================================
-
-function updatePreview() {
-  const annotations = document.getElementById('annotationsEditor').value;
-  const preview = document.getElementById('annotationsPreview');
-
-  // Simples markdown parser
-  let html = annotations
-    .split('\n')
-    .map(line => {
-      if (!line.trim()) return '';
-      
-      // **bold**
-      line = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-      
-      // _italic_
-      line = line.replace(/_(.*?)_/g, '<em>$1</em>');
-      
-      // `code`
-      line = line.replace(/`(.*?)`/g, '<code>$1</code>');
-      
-      return `<p>${line}</p>`;
-    })
-    .join('');
-
-  preview.innerHTML = html || '<p style="color: #999;">Nenhuma anotação...</p>';
-}
-
-// ========================================
-// TAGS
-// ========================================
-
-function addTag() {
-  const input = document.getElementById('tagInput');
-  const tag = input.value.trim();
-
-  if (!tag) return;
-  if (currentSnippet.tags.includes(tag)) {
-    alert('Tag já existe!');
-    return;
-  }
-
-  currentSnippet.tags.push(tag);
-  input.value = '';
-  updateTagsList();
-  saveSnippet();
-}
-
-function removeTag(tag) {
-  currentSnippet.tags = currentSnippet.tags.filter(t => t !== tag);
-  updateTagsList();
-  saveSnippet();
-}
-
-function updateTagsList() {
-  const tagsList = document.getElementById('tagsList');
-  tagsList.innerHTML = currentSnippet.tags
-    .map(tag => `
-      <span class="tag-badge">
-        ${tag}
-        <i class="fas fa-times" onclick="removeTag('${tag}')"></i>
+  buildTreeNode(folder) {
+    const childrenFolders = Storage.getChildFolders(folder.id);
+    const notes = Storage.getNotesInFolder(folder.id);
+    const hasChildren = childrenFolders.length > 0 || notes.length > 0;
+    const wrap = document.createElement('div');
+    wrap.className = 'tree-node';
+    const item = document.createElement('div');
+    item.className = 'tree-item';
+    item.dataset.id = folder.id;
+    item.dataset.type = 'folder';
+    if (this.currentView === 'folder' && this.currentFolderId === folder.id) item.classList.add('active');
+    item.innerHTML = `
+      <span class="chevron ${folder.expanded ? 'expanded' : ''} ${hasChildren ? '' : 'empty'}">
+        <i class="fas fa-chevron-right"></i>
       </span>
-    `)
-    .join('');
-}
-
-// ========================================
-// COMPARTILHAMENTO
-// ========================================
-
-function togglePublic(e) {
-  currentSnippet.public = e.target.checked;
-  saveSnippet();
-
-  if (currentSnippet.public) {
-    generateShareLink();
-  } else {
-    document.getElementById('shareLink').value = '';
-  }
-}
-
-function generateShareLink() {
-  const hash = Math.random().toString(36).substr(2, 9);
-  const link = `${window.location.origin}?share=${hash}`;
-  document.getElementById('shareLink').value = link;
-}
-
-function copyShareLink() {
-  const link = document.getElementById('shareLink');
-  if (!link.value) {
-    alert('Faça público antes de compartilhar!');
-    return;
-  }
-
-  navigator.clipboard.writeText(link.value);
-  alert('Link copiado!');
-}
-
-// ========================================
-// VERSIONING
-// ========================================
-
-function loadVersion(e) {
-  const version = e.target.value;
-  // TODO: Carregar versão do Supabase
-  console.log(`Carregando versão ${version}...`);
-}
-
-// ========================================
-// FILTROS
-// ========================================
-
-function filterByTag(e) {
-  const tag = e.target.value;
-  // TODO: Filtrar snippets por tag
-  console.log(`Filtrando por tag: ${tag}`);
-}
-
-// ========================================
-// SALVAR/DELETAR
-// ========================================
-
-function saveSnippet() {
-  currentSnippet.code = document.getElementById('codeEditor').value;
-  currentSnippet.annotations = document.getElementById('annotationsEditor').value;
-
-  // TODO: Salvar no Supabase
-  console.log('Snipper salvo:', currentSnippet);
-  showMessage('✓ Salvo!');
-}
-
-function deleteSnippet() {
-  if (confirm('Tem certeza que quer deletar?')) {
-    // TODO: Deletar do Supabase
-    console.log('Snippet deletado');
-    showMessage('Deletado!', 'error');
-  }
-}
-
-// ========================================
-// EXPORT PDF
-// ========================================
-
-function exportPDF() {
-  // TODO: Gerar PDF com html2pdf ou similar
-  alert('Export PDF - em desenvolvimento');
-  console.log('Exportando para PDF...');
-}
-
-// ========================================
-// UTILS
-// ========================================
-
-function showMessage(text, type = 'success') {
-  const message = document.createElement('div');
-  message.textContent = text;
-  message.style.cssText = `
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    padding: 10px 20px;
-    background: ${type === 'success' ? '#8b3a3a' : '#d32f2f'};
-    color: white;
-    border-radius: 4px;
-    z-index: 1000;
-  `;
-  document.body.appendChild(message);
-
-  setTimeout(() => message.remove(), 2000);
-}
+      <span class="item-icon"><i class="fas ${folder.icon || 'fa-folder'}"></i></span>
+      <span class="item-name">${escapeHtml(folder.name)}</span>
+    `;
+    item.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (e.target.closest('.chevron') && hasChildren) {
+        Storage.toggleExpanded(folder.id);
+        this.renderTree();
+        return;
+      }
+      this.openFolder(folder.id);
+    });
+    item.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.showContextMenu(e, 'folder', folder.id);
+    });
+    wrap.appendChild(item);
+    const childrenEl = document.createElement('div');
+    childrenEl.className = `tree-children ${folder.expanded ? 'open' : ''}`;
+    childrenFolders.forEach(cf => childrenEl.appendChild(this.buildTreeNode(cf)));
+    notes.forEach(note => {
+      const nItem = document.createElement('div');
+      nItem.className = 'tree-item';
+      nItem.dataset.id = note.id;
+      nItem.dataset.type = 'note';
+      if (this.currentView === 'note' && this.currentNoteId === note.id) nItem.classList.add('active');
+      nItem.innerHTML = `
+        <span class="chevron empty"></span>
+        <span class="item-icon"><i class="fas ${note.icon || 'fa-file-lines'}"></i></span>
+        <span class="item-name">${escapeHtml(note.title)}</span>
+      `;
+      nItem.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.openNote(note.id);
+      });
+      nItem.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.showContextMenu(e, 'note', note.id);
+      });
+      childrenEl.appendChild(nItem);
+    });
+    wrap.appendChild(childrenEl);
+    return wrap;
+  },
+};
