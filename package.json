@@ -1,0 +1,15 @@
+{
+  "name": "nebnotes",
+  "version": "1.0.0",
+  "description": "Aplicativo pessoal local-first para organização de conhecimento",
+  "private": true,
+  "scripts": {
+    "dev": "npx serve . -p 1420",
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2"
+  }
+}
