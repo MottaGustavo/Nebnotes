@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NebNotes - Organize seus Estudos</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <i class="fas fa-book"></i>
+        <h1>Seu Estudo</h1>
+      </div>
+
+      <div class="folder-tree" id="folderTree">
+        <div class="folder-item active" data-id="root">
+          <i class="fas fa-folder"></i>
+          Programação
+        </div>
+        <div class="folder-item nested" data-id="java">
+          <i class="fas fa-folder"></i>
+          Java
+        </div>
+        <div class="folder-item nested active" data-id="if-basico">
+          <i class="fas fa-code"></i>
+          If Básico
+        </div>
+        <div class="folder-item nested" data-id="for-loop">
+          <i class="fas fa-code"></i>
+          For Loop
+        </div>
+        <div class="folder-item nested" data-id="scanner">
+          <i class="fas fa-code"></i>
+          Scanner
+        </div>
+        <div class="folder-item nested" data-id="linguagens">
+          <i class="fas fa-folder"></i>
+          Linguagens
+        </div>
+        <div class="folder-item nested" data-id="engenharia">
+          <i class="fas fa-folder"></i>
+          Engenharia
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+      <!-- HEADER -->
+      <header class="header">
+        <div class="header-left">
+          <h2 id="currentTitle">If Básico · Java</h2>
+        </div>
+        <div class="header-right">
+          <select id="filterTags" class="filter-select">
+            <option value="">Todos os Tags</option>
+            <option value="escola">Escola</option>
+            <option value="condicional">Condicional</option>
+            <option value="facil">Fácil</option>
+          </select>
+          <button class="btn-export" id="exportPDF">
+            <i class="fas fa-file-pdf"></i> Export PDF
+          </button>
+        </div>
+      </header>
+
+      <!-- CONTENT AREA (3 COLUNAS) -->
+      <div class="content-wrapper">
+        <!-- EDITOR PANEL (40%) -->
+        <section class="editor-panel">
+          <div class="version-selector">
+            <label>Versão:</label>
+            <select id="versionSelect">
+              <option value="2">v2 (atual)</option>
+              <option value="1">v1</option>
+            </select>
+            <button class="btn-icon" title="Ver histórico">
+              <i class="fas fa-history"></i>
+            </button>
+          </div>
+
+          <div class="editor-section">
+            <label class="section-label">Código</label>
+            <textarea id="codeEditor" class="code-editor" placeholder="Cole seu código aqui...">if (x > 5) {
+  System.out.println("Maior que 5");
+}
+else {
+  System.out.println("Menor ou igual");
+}</textarea>
+          </div>
+
+          <div class="editor-section">
+            <label class="section-label">Anotações</label>
+            <textarea id="annotationsEditor" class="annotations" placeholder="Suas anotações (markdown suportado)...">Aprendi na aula 5.
+Diferença entre if e if/else.
+Usar **>=** para maior ou igual.</textarea>
+          </div>
+
+          <div class="editor-actions">
+            <button class="btn btn-save" id="saveButton">
+              <i class="fas fa-save"></i> Salvar
+            </button>
+            <button class="btn btn-delete" id="deleteButton">
+              <i class="fas fa-trash"></i> Deletar
+            </button>
+          </div>
+        </section>
+
+        <!-- RIGHT PANEL (40%) - ANOTAÇÕES RENDERIZADAS + TAGS -->
+        <section class="right-panel">
+          <!-- ANOTAÇÕES RENDERIZADAS -->
+          <div class="annotations-preview">
+            <label class="section-label">Pré-visualização</label>
+            <div id="annotationsPreview" class="preview-content">
+              <p>Aprendi na aula 5.</p>
+              <p>Diferença entre if e if/else.</p>
+              <p>Usar <strong>>=</strong> para maior ou igual.</p>
+            </div>
+          </div>
+
+          <!-- TAGS -->
+          <div class="tags-section">
+            <label class="section-label">Tags</label>
+            <div class="tags-input-group">
+              <input type="text" id="tagInput" class="tag-input" placeholder="+ Nova tag">
+              <button class="btn-icon" id="addTagButton">
+                <i class="fas fa-plus"></i>
+              </button>
+            </div>
+            <div id="tagsList" class="tags-list">
+              <span class="tag-badge">Escola <i class="fas fa-times"></i></span>
+              <span class="tag-badge">Condicional <i class="fas fa-times"></i></span>
+            </div>
+          </div>
+
+          <!-- COMPARTILHAMENTO -->
+          <div class="sharing-section">
+            <label class="section-label">Compartilhamento</label>
+            <div class="sharing-toggle">
+              <label class="checkbox-label">
+                <input type="checkbox" id="publicToggle">
+                Público
+              </label>
+            </div>
+            <button class="btn btn-share" id="shareButton">
+              <i class="fas fa-link"></i> Copiar Link
+            </button>
+            <input type="text" id="shareLink" class="share-link" readonly placeholder="link aqui...">
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- SCRIPTS -->
+  <script src="js/supabase.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
