@@ -3,161 +3,201 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NebNotes - Organize seus Estudos</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <title>NebNotes</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" id="hljs-theme">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <div class="app-container">
+  <div class="app" id="app">
     <!-- SIDEBAR -->
-    <aside class="sidebar">
+    <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
-        <i class="fas fa-book"></i>
-        <h1>Seu Estudo</h1>
+        <div class="logo" id="logoBtn" title="Ir para Dashboard">
+          <i class="fas fa-cloud"></i>
+          <span>NebNotes</span>
+        </div>
+        <div class="sidebar-actions">
+          <button class="icon-btn" id="btnNewFolder" title="Nova pasta">
+            <i class="fas fa-folder-plus"></i>
+          </button>
+          <button class="icon-btn" id="btnNewNote" title="Nova nota">
+            <i class="fas fa-file-circle-plus"></i>
+          </button>
+        </div>
       </div>
 
-      <div class="folder-tree" id="folderTree">
-        <div class="folder-item active" data-id="root">
-          <i class="fas fa-folder"></i>
-          Programação
-        </div>
-        <div class="folder-item nested" data-id="java">
-          <i class="fas fa-folder"></i>
-          Java
-        </div>
-        <div class="folder-item nested active" data-id="if-basico">
-          <i class="fas fa-code"></i>
-          If Básico
-        </div>
-        <div class="folder-item nested" data-id="for-loop">
-          <i class="fas fa-code"></i>
-          For Loop
-        </div>
-        <div class="folder-item nested" data-id="scanner">
-          <i class="fas fa-code"></i>
-          Scanner
-        </div>
-        <div class="folder-item nested" data-id="linguagens">
-          <i class="fas fa-folder"></i>
-          Linguagens
-        </div>
-        <div class="folder-item nested" data-id="engenharia">
-          <i class="fas fa-folder"></i>
-          Engenharia
-        </div>
+      <div class="tree-container" id="treeContainer">
+        <!-- Tree rendered by JS -->
+      </div>
+
+      <div class="sidebar-footer">
+        <button class="icon-btn" id="btnSettings" title="Configurações">
+          <i class="fas fa-gear"></i>
+        </button>
+        <button class="icon-btn" id="btnDashboard" title="Dashboard">
+          <i class="fas fa-house"></i>
+        </button>
       </div>
     </aside>
 
-    <!-- MAIN CONTENT -->
-    <main class="main-content">
-      <!-- HEADER -->
-      <header class="header">
-        <div class="header-left">
-          <h2 id="currentTitle">If Básico · Java</h2>
+    <!-- MAIN -->
+    <main class="main">
+      <!-- Breadcrumbs -->
+      <nav class="breadcrumbs" id="breadcrumbs">
+        <span class="crumb" data-id="dashboard">Início</span>
+      </nav>
+
+      <!-- DASHBOARD VIEW -->
+      <section class="view dashboard-view" id="dashboardView">
+        <div class="dashboard-header">
+          <h1>Bem-vindo ao NebNotes</h1>
+          <p class="subtitle">Um lugar para guardar, organizar e consultar tudo que você aprende.</p>
         </div>
-        <div class="header-right">
-          <select id="filterTags" class="filter-select">
-            <option value="">Todos os Tags</option>
-            <option value="escola">Escola</option>
-            <option value="condicional">Condicional</option>
-            <option value="facil">Fácil</option>
-          </select>
-          <button class="btn-export" id="exportPDF">
-            <i class="fas fa-file-pdf"></i> Export PDF
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <i class="fas fa-folder"></i>
+            <div>
+              <span class="stat-value" id="statFolders">0</span>
+              <span class="stat-label">Pastas</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <i class="fas fa-file-lines"></i>
+            <div>
+              <span class="stat-value" id="statNotes">0</span>
+              <span class="stat-label">Notas</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <i class="fas fa-layer-group"></i>
+            <div>
+              <span class="stat-value" id="statTypes">0</span>
+              <span class="stat-label">Tipos usados</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="dashboard-grid">
+          <div class="dash-section">
+            <h2><i class="fas fa-clock-rotate-left"></i> Notas recentes</h2>
+            <div class="recent-list" id="recentNotes">
+              <!-- filled by JS -->
+            </div>
+          </div>
+          <div class="dash-section">
+            <h2><i class="fas fa-folder-tree"></i> Pastas principais</h2>
+            <div class="folders-list" id="rootFolders">
+              <!-- filled by JS -->
+            </div>
+          </div>
+        </div>
+
+        <div class="quick-actions">
+          <button class="btn btn-primary" id="dashNewNote">
+            <i class="fas fa-plus"></i> Nova nota
+          </button>
+          <button class="btn btn-secondary" id="dashNewFolder">
+            <i class="fas fa-folder-plus"></i> Nova pasta
           </button>
         </div>
-      </header>
+      </section>
 
-      <!-- CONTENT AREA (3 COLUNAS) -->
-      <div class="content-wrapper">
-        <!-- EDITOR PANEL (40%) -->
-        <section class="editor-panel">
-          <div class="version-selector">
-            <label>Versão:</label>
-            <select id="versionSelect">
-              <option value="2">v2 (atual)</option>
-              <option value="1">v1</option>
-            </select>
-            <button class="btn-icon" title="Ver histórico">
-              <i class="fas fa-history"></i>
+      <!-- NOTE EDITOR VIEW -->
+      <section class="view editor-view hidden" id="editorView">
+        <div class="editor-header">
+          <div class="note-meta">
+            <button class="type-badge" id="noteTypeBtn" title="Alterar tipo">
+              <i class="fas fa-file-lines"></i>
+              <span>Texto</span>
             </button>
+            <input type="text" id="noteTitle" class="note-title-input" placeholder="Título da nota" maxlength="120">
           </div>
-
-          <div class="editor-section">
-            <label class="section-label">Código</label>
-            <textarea id="codeEditor" class="code-editor" placeholder="Cole seu código aqui...">if (x > 5) {
-  System.out.println("Maior que 5");
-}
-else {
-  System.out.println("Menor ou igual");
-}</textarea>
-          </div>
-
-          <div class="editor-section">
-            <label class="section-label">Anotações</label>
-            <textarea id="annotationsEditor" class="annotations" placeholder="Suas anotações (markdown suportado)...">Aprendi na aula 5.
-Diferença entre if e if/else.
-Usar **>=** para maior ou igual.</textarea>
-          </div>
-
           <div class="editor-actions">
-            <button class="btn btn-save" id="saveButton">
-              <i class="fas fa-save"></i> Salvar
-            </button>
-            <button class="btn btn-delete" id="deleteButton">
-              <i class="fas fa-trash"></i> Deletar
+            <button class="btn btn-ghost" id="btnSaveNote" title="Salvar (Ctrl+S)">
+              <i class="fas fa-floppy-disk"></i> Salvar
             </button>
           </div>
-        </section>
+        </div>
 
-        <!-- RIGHT PANEL (40%) - ANOTAÇÕES RENDERIZADAS + TAGS -->
-        <section class="right-panel">
-          <!-- ANOTAÇÕES RENDERIZADAS -->
-          <div class="annotations-preview">
-            <label class="section-label">Pré-visualização</label>
-            <div id="annotationsPreview" class="preview-content">
-              <p>Aprendi na aula 5.</p>
-              <p>Diferença entre if e if/else.</p>
-              <p>Usar <strong>>=</strong> para maior ou igual.</p>
-            </div>
-          </div>
-
-          <!-- TAGS -->
-          <div class="tags-section">
-            <label class="section-label">Tags</label>
-            <div class="tags-input-group">
-              <input type="text" id="tagInput" class="tag-input" placeholder="+ Nova tag">
-              <button class="btn-icon" id="addTagButton">
-                <i class="fas fa-plus"></i>
-              </button>
-            </div>
-            <div id="tagsList" class="tags-list">
-              <span class="tag-badge">Escola <i class="fas fa-times"></i></span>
-              <span class="tag-badge">Condicional <i class="fas fa-times"></i></span>
-            </div>
-          </div>
-
-          <!-- COMPARTILHAMENTO -->
-          <div class="sharing-section">
-            <label class="section-label">Compartilhamento</label>
-            <div class="sharing-toggle">
-              <label class="checkbox-label">
-                <input type="checkbox" id="publicToggle">
-                Público
-              </label>
-            </div>
-            <button class="btn btn-share" id="shareButton">
-              <i class="fas fa-link"></i> Copiar Link
+        <div class="editor-body">
+          <div class="editor-toolbar">
+            <button class="tb-btn" data-md="bold" title="Negrito"><i class="fas fa-bold"></i></button>
+            <button class="tb-btn" data-md="italic" title="Itálico"><i class="fas fa-italic"></i></button>
+            <button class="tb-btn" data-md="code" title="Código inline"><i class="fas fa-code"></i></button>
+            <button class="tb-btn" data-md="h2" title="Título"><i class="fas fa-heading"></i></button>
+            <button class="tb-btn" data-md="list" title="Lista"><i class="fas fa-list-ul"></i></button>
+            <button class="tb-btn" data-md="check" title="Checklist"><i class="fas fa-list-check"></i></button>
+            <button class="tb-btn" data-md="quote" title="Citação"><i class="fas fa-quote-left"></i></button>
+            <button class="tb-btn" data-md="codeblock" title="Bloco de código"><i class="fas fa-file-code"></i></button>
+            <span class="tb-sep"></span>
+            <button class="tb-btn" id="btnTogglePreview" title="Alternar preview">
+              <i class="fas fa-eye"></i>
             </button>
-            <input type="text" id="shareLink" class="share-link" readonly placeholder="link aqui...">
           </div>
-        </section>
-      </div>
+
+          <div class="editor-panes">
+            <textarea id="noteContent" class="note-content" placeholder="Escreva suas anotações aqui...&#10;&#10;Suporta Markdown:&#10;# Título&#10;**negrito** _itálico_ `código`&#10;- lista&#10;```js&#10;código&#10;```" spellcheck="true"></textarea>
+            <div id="notePreview" class="note-preview hidden"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- FOLDER VIEW (when selecting a folder) -->
+      <section class="view folder-view hidden" id="folderView">
+        <div class="folder-header">
+          <div class="folder-title-row">
+            <i class="fas fa-folder-open folder-icon-large" id="folderIconDisplay"></i>
+            <h1 id="folderTitle">Pasta</h1>
+          </div>
+          <div class="folder-actions">
+            <button class="btn btn-secondary" id="btnFolderNewNote">
+              <i class="fas fa-file-circle-plus"></i> Nova nota
+            </button>
+            <button class="btn btn-secondary" id="btnFolderNewSubfolder">
+              <i class="fas fa-folder-plus"></i> Subpasta
+            </button>
+          </div>
+        </div>
+        <div class="folder-content" id="folderContent">
+          <!-- notes and subfolders -->
+        </div>
+      </section>
     </main>
   </div>
 
-  <!-- SCRIPTS -->
-  <script src="js/supabase.js"></script>
+  <!-- CONTEXT MENU -->
+  <div class="context-menu hidden" id="contextMenu">
+    <!-- filled dynamically -->
+  </div>
+
+  <!-- MODALS -->
+  <div class="modal-overlay hidden" id="modalOverlay">
+    <div class="modal" id="modal">
+      <div class="modal-header">
+        <h3 id="modalTitle">Título</h3>
+        <button class="icon-btn" id="modalClose"><i class="fas fa-xmark"></i></button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+      <div class="modal-footer" id="modalFooter"></div>
+    </div>
+  </div>
+
+  <!-- TYPE / ICON PICKER -->
+  <div class="picker-overlay hidden" id="pickerOverlay">
+    <div class="picker" id="picker">
+      <h4 id="pickerTitle">Escolher tipo</h4>
+      <div class="picker-grid" id="pickerGrid"></div>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.0/marked.min.js"></script>
+  <script src="js/storage.js"></script>
   <script src="js/utils.js"></script>
   <script src="js/app.js"></script>
 </body>
